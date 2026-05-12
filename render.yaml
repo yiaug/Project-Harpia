@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: harpia-saas
+    environment: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    plan: starter # Switch to whatever plan is needed
+    region: ohio
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_URL
+        value: https://harpia-saas.onrender.com # Change to specific custom domain later
+      - key: PORT
+        value: 3000

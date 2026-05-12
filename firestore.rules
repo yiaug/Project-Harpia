@@ -1,0 +1,199 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email != null && (request.auth.token.email == "smiley62830@gmail.com" || request.auth.token.email == "Smiley62830@gmail.com");
+    }
+
+    // Check if user is admin
+    function isAdmin() {
+      return isSuperAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
+    }
+
+    // Check if user is moderator
+    function isModerator() {
+      return isSuperAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ["admin", "moderator"]);
+    }
+
+    // Is the user approved?
+    function isApproved() {
+      return isSuperAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved");
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(["uid", "email", "role", "status", "createdAt", "updatedAt"])
+        && data.uid is string && data.uid.size() > 0
+        && data.email is string && data.email.size() > 0
+        && data.role in ["user", "moderator", "admin"]
+        && data.status in ["pending", "approved", "blocked"]
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isModerator();
+      allow create: if isOwner(userId)
+                    && isValidUser(incoming())
+                    && incoming().uid == request.auth.uid
+                    && (incoming().role == "user" || isSuperAdmin())
+                    && (incoming().status == "pending" || isSuperAdmin())
+                    && incoming().createdAt == request.time
+                    && incoming().updatedAt == request.time;
+      allow update: if (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt'])) || isAdmin() || (isModerator() && incoming().diff(existing()).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin();
+    }
+
+    function isValidBook(data) {
+      return data.keys().hasAll(["title", "author", "synopsis", "categoryId", "pdfUrl", "createdAt", "updatedAt"])
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.author is string && data.author.size() > 0
+        && data.synopsis is string
+        && data.categoryId is string && data.categoryId.size() > 0
+        && data.pdfUrl is string && data.pdfUrl.size() > 0
+        // coverBase64 is optional in required keys, but if present should be validated.
+        // using size() for base64
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /books/{bookId} {
+      allow read: if isApproved() || isAdmin();
+      allow create: if isAdmin() && isValidBook(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isApproved() || isAdmin();
+      allow create: if isAdmin() && incoming().keys().hasAll(['name', 'createdAt']) && incoming().name is string && incoming().createdAt is timestamp;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /favorites/{favoriteId} {
+      allow read: if isOwner(existing().userId) || isAdmin();
+      allow create: if isOwner(incoming().userId) 
+                    && incoming().keys().hasAll(['bookId', 'userId', 'updatedAt'])
+                    && incoming().bookId is string && incoming().userId is string
+                    && incoming().updatedAt == request.time;
+      allow update: if isOwner(existing().userId) && incoming().userId == existing().userId && incoming().updatedAt == request.time;
+      allow delete: if isOwner(existing().userId) || isAdmin();
+    }
+
+    match /forumTopics/{topicId} {
+      allow read: if isApproved() || isAdmin();
+      allow create: if isApproved() 
+                    && incoming().keys().hasAll(['title', 'content', 'authorId', 'categoryId', 'createdAt', 'updatedAt'])
+                    && incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 300
+                    && incoming().content is string && incoming().content.size() > 0
+                    && incoming().authorId == request.auth.uid
+                    && incoming().categoryId is string
+                    && incoming().createdAt == request.time
+                    && incoming().updatedAt == request.time;
+      allow update: if (isOwner(existing().authorId) && incoming().authorId == existing().authorId && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'updatedAt']) && incoming().updatedAt == request.time) 
+                    || (isApproved() && incoming().diff(existing()).affectedKeys().hasOnly(['upvotedBy', 'downvotedBy', 'score']))
+                    || isAdmin();
+      allow delete: if isOwner(existing().authorId) || isAdmin();
+    }
+
+    match /forumMessages/{messageId} {
+      allow read: if isApproved() || isAdmin();
+      allow create: if isApproved()
+                    && incoming().keys().hasAll(['topicId', 'content', 'authorId', 'createdAt', 'updatedAt'])
+                    && incoming().topicId is string
+                    && incoming().content is string && incoming().content.size() > 0 && incoming().content.size() <= 5000
+                    && incoming().authorId == request.auth.uid
+                    && incoming().createdAt == request.time
+                    && incoming().updatedAt == request.time;
+      allow update: if (isOwner(existing().authorId) && incoming().authorId == existing().authorId && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'updatedAt']) && incoming().updatedAt == request.time) 
+                    || (isApproved() && incoming().diff(existing()).affectedKeys().hasOnly(['upvotedBy', 'downvotedBy', 'score']))
+                    || isAdmin();
+      allow delete: if isOwner(existing().authorId) || isAdmin();
+    }
+
+    match /chatRooms/{roomId} {
+      allow read: if isApproved() || isAdmin();
+      allow create: if isAdmin() 
+                    && incoming().keys().hasAll(['name', 'type', 'createdBy', 'createdAt'])
+                    && incoming().name is string && incoming().name.size() > 0
+                    && incoming().type in ["text", "voice"]
+                    && incoming().createdBy == request.auth.uid
+                    && incoming().createdAt == request.time;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /chatMessages/{messageId} {
+      allow read: if isApproved() || isModerator();
+      allow create: if isApproved()
+                    && incoming().keys().hasAll(['roomId', 'content', 'authorId', 'createdAt'])
+                    && incoming().roomId is string
+                    && incoming().content is string && incoming().content.size() <= 1000
+                    && incoming().authorId == request.auth.uid
+                    && incoming().createdAt == request.time;
+      allow update: if isApproved() && incoming().diff(existing()).affectedKeys().hasOnly(['reactions']);
+      allow delete: if isModerator();
+    }
+
+    match /userShelves/{shelfId} {
+      allow read: if isOwner(existing().userId) || isAdmin();
+      allow create: if isOwner(incoming().userId);
+      allow update: if isOwner(existing().userId) && isOwner(incoming().userId);
+      allow delete: if isOwner(existing().userId) || isAdmin();
+    }
+
+    match /bookReviews/{reviewId} {
+      allow read: if isApproved() || isAdmin();
+      allow create: if isOwner(incoming().userId) && isApproved();
+      allow update: if isOwner(existing().userId) && isOwner(incoming().userId) && isApproved();
+      allow delete: if isOwner(existing().userId) || isAdmin();
+    }
+
+    match /userProgress/{progressId} {
+      allow read: if isOwner(existing().userId) || isAdmin();
+      allow create: if isOwner(incoming().userId);
+      allow update: if isOwner(existing().userId) && isOwner(incoming().userId);
+    }
+
+    match /tarotHistory/{historyId} {
+      allow read: if isOwner(existing().userId) || isAdmin();
+      allow create: if isOwner(incoming().userId);
+      allow delete: if isOwner(existing().userId) || isAdmin();
+    }
+
+    match /chatPresences/{presenceId} {
+      allow read: if isApproved() || isModerator();
+      allow create, update: if isOwner(incoming().userId);
+      allow delete: if isOwner(existing().userId);
+    }
+
+    match /reports/{reportId} {
+      allow read: if isModerator();
+      allow create: if isApproved() 
+                    && incoming().keys().hasAll(['type', 'targetId', 'reason', 'reporterId', 'status', 'createdAt'])
+                    && incoming().reporterId == request.auth.uid
+                    && incoming().status == 'pending'
+                    && incoming().createdAt == request.time;
+      allow update: if isModerator() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'resolvedBy', 'resolvedAt']);
+      allow delete: if isModerator();
+    }
+
+    match /globalSettings/{settingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
+

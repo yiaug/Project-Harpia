@@ -1,0 +1,142 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile and access control.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "status": { "type": "string", "enum": ["pending", "approved", "blocked"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role", "status", "createdAt", "updatedAt"]
+    },
+    "book": {
+      "title": "Book",
+      "description": "Library book entry.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "synopsis": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "pdfUrl": { "type": "string" },
+        "coverBase64": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "author", "synopsis", "categoryId", "pdfUrl", "createdAt", "updatedAt"]
+    },
+    "category": {
+       "title": "Category",
+       "description": "Library book category.",
+       "type": "object",
+       "properties": {
+         "name": { "type": "string" },
+         "createdAt": { "type": "string" }
+       },
+       "required": ["name", "createdAt"]
+    },
+    "favorite": {
+       "title": "Favorite Books",
+       "description": "User's favorite books or reading progress.",
+       "type": "object",
+       "properties": {
+         "bookId": { "type": "string" },
+         "userId": { "type": "string" },
+         "isFavorite": { "type": "boolean" },
+         "lastReadPage": { "type": "number" },
+         "updatedAt": { "type": "string" }
+       },
+       "required": ["bookId", "userId", "updatedAt"]
+    },
+    "forum_topic": {
+      "title": "Forum Topic",
+      "description": "A topic created in the forum.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "content", "authorId", "categoryId", "createdAt", "updatedAt"]
+    },
+    "forum_message": {
+      "title": "Forum Message",
+      "description": "A reply in a forum topic.",
+      "type": "object",
+      "properties": {
+        "topicId": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["topicId", "content", "authorId", "createdAt", "updatedAt"]
+    },
+    "chat_room": {
+      "title": "Chat Room",
+      "description": "Chat room created by admin.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "voice"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "type", "createdAt"]
+    },
+    "chat_message": {
+      "title": "Chat Message",
+      "description": "Realtime chat message in a text room.",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["roomId", "content", "authorId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "user" },
+      "description": "Store user profiles."
+    },
+    "/books/{bookId}": {
+      "schema": { "$ref": "book" },
+      "description": "Store books."
+    },
+    "/categories/{categoryId}": {
+        "schema": { "$ref": "category" },
+        "description": "Store categories."
+    },
+    "/favorites/{favoriteId}": {
+        "schema": { "$ref": "favorite" },
+        "description": "Store user reading progress and favorites. Document id could be userId_bookId"
+    },
+    "/forumTopics/{topicId}": {
+      "schema": { "$ref": "forum_topic" },
+      "description": "Store forum topics."
+    },
+    "/forumMessages/{messageId}": {
+      "schema": { "$ref": "forum_message" },
+      "description": "Store forum messages."
+    },
+    "/chatRooms/{roomId}": {
+      "schema": { "$ref": "chat_room" },
+      "description": "Store chat rooms."
+    },
+    "/chatMessages/{messageId}": {
+      "schema": { "$ref": "chat_message" },
+      "description": "Store chat messages."
+    }
+  }
+}

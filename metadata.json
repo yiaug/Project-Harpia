@@ -1,0 +1,8 @@
+{
+  "name": "Harpia",
+  "description": "SaaS focado em esoterismo com biblioteca digital, fórum, tarot integrado e chats de voz/texto.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": []
+}
