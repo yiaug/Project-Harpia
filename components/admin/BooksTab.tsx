@@ -15,14 +15,47 @@ export function BooksTab({ books, fetchBooks, categories }: { books: any[], fetc
   const [editingBook, setEditingBook] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
+  const compressImage = (file: File, callback: (base64: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_WIDTH = 600;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        callback(canvas.toDataURL('image/jpeg', 0.7)); // 0.7 quality saves significant space
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
      const file = e.target.files?.[0];
      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-           setNewBook(prev => ({ ...prev, coverBase64: reader.result as string }));
-        };
-        reader.readAsDataURL(file);
+        compressImage(file, (base64) => {
+           setNewBook(prev => ({ ...prev, coverBase64: base64 }));
+        });
      }
   }
 
@@ -85,11 +118,9 @@ export function BooksTab({ books, fetchBooks, categories }: { books: any[], fetc
   const handleEditCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
      const file = e.target.files?.[0];
      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-           setEditingBook((prev: any) => ({ ...prev, coverBase64: reader.result as string }));
-        };
-        reader.readAsDataURL(file);
+        compressImage(file, (base64) => {
+           setEditingBook((prev: any) => ({ ...prev, coverBase64: base64 }));
+        });
      }
   }
 
