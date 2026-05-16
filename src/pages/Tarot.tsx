@@ -84,12 +84,16 @@ export default function Tarot() {
 
           const img = new Image();
           img.src = imgUrl;
-          img.onload = () => {
+          
+          const handleLoaded = () => {
              const finalCard = { ...c, imgUrl, name_pt: translated.nome_pt, meaning_pt: translated.significado_pt };
              setCard(finalCard);
              setLoading(false);
              saveToHistory(finalCard, type);
           };
+
+          img.onload = handleLoaded;
+          img.onerror = handleLoaded; // fallback if image is blocked
        }
     } catch (e) {
        console.error(e);
@@ -111,7 +115,7 @@ export default function Tarot() {
          <p className="text-zinc-400 mt-2 tracking-wide font-medium">Conecte-se com o universo através do fluxo de energias arcaicas.</p>
       </div>
 
-      <Tabs defaultValue="daily" className="w-full" onValueChange={setActiveTab}>
+      <Tabs defaultValue="daily" className="w-full" onValueChange={(v) => { setActiveTab(v); setCard(null); setFlipped(false); }}>
          <TabsList className="grid w-full grid-cols-3 bg-[#1a0b2e]/60 backdrop-blur-md border border-fuchsia-900/30 p-1 rounded-xl shadow-lg shadow-indigo-900/10">
             <TabsTrigger value="daily" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg"><Calendar className="w-4 h-4 mr-2 hidden sm:block" /> Visão Diária</TabsTrigger>
             <TabsTrigger value="free" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg"><Sparkles className="w-4 h-4 mr-2 hidden sm:block" /> Consulta Livre</TabsTrigger>
@@ -153,7 +157,7 @@ export default function Tarot() {
                   {history.map((item, idx) => (
                      <Card key={idx} className="bg-[#1a0b2e]/60 border-fuchsia-900/30 flex overflow-hidden shadow-lg shadow-fuchsia-900/10 backdrop-blur-sm group hover:border-fuchsia-500/30 transition-all cursor-default">
                         <div className="w-1/3 bg-[#0c0514]/60 flex-shrink-0 relative overflow-hidden">
-                           <img src={item.card.imgUrl} alt="Capa" className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500 z-0" />
+                           <img src={item.card.imgUrl} alt="Capa" referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500 z-0" />
                            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1a0b2e]/60 z-10"></div>
                         </div>
                         <div className="p-4 flex flex-col justify-center w-2/3 relative z-20">
@@ -178,23 +182,28 @@ export default function Tarot() {
          <div className="flex justify-center w-full min-h-[450px] mt-8">
           <div className="flex flex-col lg:flex-row gap-10 items-center lg:items-start w-full max-w-4xl">
               {/* 3D Card Container */}
-              <div className="perspective-1000 w-[240px] md:w-[280px] shrink-0" onClick={handleFlip}>
+              <div className="w-[240px] md:w-[280px] shrink-0" onClick={handleFlip}>
                 <motion.div 
-                   className="w-[240px] md:w-[280px] aspect-[1/1.7] relative preserve-3d cursor-pointer drop-shadow-[0_20px_30px_rgba(251,191,36,0.15)] group"
-                   animate={{ rotateY: flipped ? 180 : 0 }}
-                   transition={{ type: "spring", stiffness: 50, damping: 20 }}
+                   className="w-[240px] md:w-[280px] aspect-[1/1.7] relative cursor-pointer drop-shadow-[0_20px_30px_rgba(251,191,36,0.15)] group"
+                   animate={{ scale: flipped ? 1.05 : 1 }}
+                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                   {/* Back of card */}
-                   <div className="absolute inset-0 backface-hidden bg-[url('https://upload.wikimedia.org/wikipedia/commons/d/d4/RWS_Tarot_00_Fool.jpg')] bg-cover bg-center rounded-2xl border-4 border-[#4a1d6a] shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center before:absolute before:inset-0 before:bg-[#0c0514]/90 before:rounded-xl">
-                      <div className="relative z-10 text-amber-500/70 flex flex-col items-center group-hover:text-amber-400 transition-colors">
-                        <Sparkles className="w-16 h-16 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]" />
-                        <span className="text-sm mt-4 font-serif tracking-widest uppercase">Revelar</span>
+                   {!flipped ? (
+                      <div 
+                         className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/d/d4/RWS_Tarot_00_Fool.jpg')] bg-cover bg-center rounded-2xl border-4 border-[#4a1d6a] shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center before:absolute before:inset-0 before:bg-[#0c0514]/90 before:rounded-xl"
+                      >
+                         <div className="relative z-10 text-amber-500/70 flex flex-col items-center group-hover:text-amber-400 transition-colors">
+                           <Sparkles className="w-16 h-16 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]" />
+                           <span className="text-sm mt-4 font-serif tracking-widest uppercase">Revelar</span>
+                         </div>
                       </div>
-                   </div>
-                   {/* Front of card */}
-                   <div className="absolute inset-0 backface-hidden [transform:rotateY(180deg)] rounded-2xl border-4 border-amber-600/80 shadow-[0_0_30px_rgba(217,119,6,0.3)] overflow-hidden bg-slate-100">
-                      <img src={card.imgUrl} alt={card.name} className="w-full h-full object-cover" />
-                   </div>
+                   ) : (
+                      <div 
+                         className="absolute inset-0 rounded-2xl border-4 border-amber-600/80 shadow-[0_0_30px_rgba(217,119,6,0.3)] overflow-hidden bg-slate-100"
+                      >
+                         <img src={card.imgUrl} alt={card.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                      </div>
+                   )}
                 </motion.div>
               </div>
 

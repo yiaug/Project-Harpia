@@ -20,8 +20,8 @@ export function BooksTab({ books, fetchBooks, categories }: { books: any[], fetc
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX_WIDTH = 600;
-        const MAX_HEIGHT = 800;
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 600;
         let width = img.width;
         let height = img.height;
 
@@ -43,7 +43,7 @@ export function BooksTab({ books, fetchBooks, categories }: { books: any[], fetc
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
         
-        callback(canvas.toDataURL('image/jpeg', 0.7)); // 0.7 quality saves significant space
+        callback(canvas.toDataURL('image/jpeg', 0.6)); // 0.6 quality saves significant space
       };
       img.src = e.target?.result as string;
     };
@@ -54,6 +54,10 @@ export function BooksTab({ books, fetchBooks, categories }: { books: any[], fetc
      const file = e.target.files?.[0];
      if (file) {
         compressImage(file, (base64) => {
+           if (base64.length > 900000) {
+              toast.error("Imagem ainda é muito grande após compressão.");
+              return;
+           }
            setNewBook(prev => ({ ...prev, coverBase64: base64 }));
         });
      }
@@ -119,6 +123,10 @@ export function BooksTab({ books, fetchBooks, categories }: { books: any[], fetc
      const file = e.target.files?.[0];
      if (file) {
         compressImage(file, (base64) => {
+           if (base64.length > 900000) {
+              toast.error("Imagem ainda é muito grande após compressão.");
+              return;
+           }
            setEditingBook((prev: any) => ({ ...prev, coverBase64: base64 }));
         });
      }
