@@ -14,10 +14,10 @@ export function DownloadAppDialog() {
   return (
     <Dialog>
       <DialogTrigger render={
-        <Button variant="ghost" size="sm" className="text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-900/20 font-medium" />
-      }>
-        <Download className="w-4 h-4 mr-2" /> Instalar App
-      </DialogTrigger>
+        <Button variant="ghost" size="sm" className="text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-900/20 font-medium px-2 sm:px-3">
+          <Download className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Instalar App</span>
+        </Button>
+      } />
       <DialogContent className="bg-[#1a0b2e] border-fuchsia-900/50 text-fuchsia-100 backdrop-blur-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">Instalar Harpia no Android</DialogTitle>

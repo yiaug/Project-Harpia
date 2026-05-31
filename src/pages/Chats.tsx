@@ -30,7 +30,7 @@ export default function Chats() {
   }, [activeRoom?.id]);
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)] gap-0 md:gap-6 relative z-10 w-full">
+    <div className="flex h-[calc(100dvh-12rem)] md:h-[calc(100dvh-8rem)] gap-0 md:gap-6 relative z-10 w-full">
        {/* Sidebar / Room List */}
        <div className={`w-full md:w-1/3 flex-col space-y-4 ${activeRoom ? 'hidden md:flex' : 'flex'}`}>
           <Card className="bg-[#1a0b2e]/60 border-fuchsia-900/30 backdrop-blur-md flex-1 flex flex-col overflow-hidden shadow-lg shadow-indigo-900/10">

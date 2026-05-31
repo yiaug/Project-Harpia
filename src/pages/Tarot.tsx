@@ -117,9 +117,9 @@ export default function Tarot() {
 
       <Tabs defaultValue="daily" className="w-full" onValueChange={(v) => { setActiveTab(v); setCard(null); setFlipped(false); }}>
          <TabsList className="grid w-full grid-cols-3 bg-[#1a0b2e]/60 backdrop-blur-md border border-fuchsia-900/30 p-1 rounded-xl shadow-lg shadow-indigo-900/10">
-            <TabsTrigger value="daily" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg"><Calendar className="w-4 h-4 mr-2 hidden sm:block" /> Visão Diária</TabsTrigger>
-            <TabsTrigger value="free" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg"><Sparkles className="w-4 h-4 mr-2 hidden sm:block" /> Consulta Livre</TabsTrigger>
-            <TabsTrigger value="diary" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg"><BookOpen className="w-4 h-4 mr-2 hidden sm:block" /> Grimório Pessoal</TabsTrigger>
+            <TabsTrigger value="daily" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg text-xs sm:text-sm whitespace-normal h-auto py-2"><Calendar className="w-4 h-4 mr-2 hidden sm:block" /> <span className="hidden sm:inline">Visão Diária</span><span className="sm:hidden">Diária</span></TabsTrigger>
+            <TabsTrigger value="free" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg text-xs sm:text-sm whitespace-normal h-auto py-2"><Sparkles className="w-4 h-4 mr-2 hidden sm:block" /> <span className="hidden sm:inline">Consulta Livre</span><span className="sm:hidden">Livre</span></TabsTrigger>
+            <TabsTrigger value="diary" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg text-xs sm:text-sm whitespace-normal h-auto py-2"><BookOpen className="w-4 h-4 mr-2 hidden sm:block" /> <span className="hidden sm:inline">Grimório Pessoal</span><span className="sm:hidden">Grimório</span></TabsTrigger>
          </TabsList>
 
          <div className="mt-8">

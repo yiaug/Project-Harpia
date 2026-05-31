@@ -40,7 +40,7 @@ export default function MainLayout() {
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-[#0c0514] text-zinc-100 flex flex-col pb-16 md:pb-0 font-sans selection:bg-fuchsia-900/50 selection:text-fuchsia-100">
+    <div className="min-h-[100dvh] bg-[#0c0514] text-zinc-100 flex flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 font-sans selection:bg-fuchsia-900/50 selection:text-fuchsia-100">
       {announcement && (
          <div className="bg-fuchsia-900/90 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 border-b border-fuchsia-800">
              <Info className="w-4 h-4 shrink-0" />
@@ -95,7 +95,7 @@ export default function MainLayout() {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0c0514]/90 backdrop-blur-xl border-t border-fuchsia-900/20 flex items-center justify-around p-2 pb-safe z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0c0514]/90 backdrop-blur-xl border-t border-fuchsia-900/20 flex items-center justify-around p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] z-50">
         {navItems.map(item => {
            const isActive = location.pathname === item.path;
            return (

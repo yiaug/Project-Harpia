@@ -90,7 +90,7 @@ export default function ReadBook() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] relative z-10 w-full">
+    <div className="flex flex-col h-[calc(100dvh-12rem)] md:h-[calc(100dvh-8rem)] relative z-10 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => navigate('/')} className="text-zinc-400 hover:text-fuchsia-100 hover:bg-fuchsia-900/20 transition-colors">
