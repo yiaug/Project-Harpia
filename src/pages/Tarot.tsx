@@ -78,7 +78,7 @@ export default function Tarot() {
        const data = await res.json();
        if (data && data.cards && data.cards.length > 0) {
           const c = data.cards[0];
-          const imgUrl = `https://sacred-texts.com/tarot/pkt/img/${c.name_short}.jpg`;
+          const imgUrl = `/api/tarot/image/${c.name_short}`;
           
           const translated = translateTarotCard(c.name, c.meaning_up);
 
@@ -157,7 +157,7 @@ export default function Tarot() {
                   {history.map((item, idx) => (
                      <Card key={idx} className="bg-[#1a0b2e]/60 border-fuchsia-900/30 flex overflow-hidden shadow-lg shadow-fuchsia-900/10 backdrop-blur-sm group hover:border-fuchsia-500/30 transition-all cursor-default">
                         <div className="w-1/3 bg-[#0c0514]/60 flex-shrink-0 relative overflow-hidden">
-                           <img src={item.card.imgUrl} alt="Capa" referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500 z-0" />
+                           <img src={item.card.imgUrl.replace('https://sacred-texts.com/tarot/pkt/img/', '/api/tarot/image/')} alt="Capa" referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500 z-0" />
                            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1a0b2e]/60 z-10"></div>
                         </div>
                         <div className="p-4 flex flex-col justify-center w-2/3 relative z-20">

@@ -69,6 +69,32 @@ async function startServer() {
     }
   });
 
+  app.get('/api/tarot/image/:name_short', async (req, res) => {
+    try {
+      let { name_short } = req.params;
+      name_short = name_short.replace('.jpg', '');
+      const url = `https://sacred-texts.com/tarot/pkt/img/${name_short}.jpg`;
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'Accept': 'image/avif,image/webp,*/*',
+          'Referer': 'https://sacred-texts.com/tarot/'
+        }
+      });
+      if (!response.ok) {
+        return res.status(response.status).send('Image not found');
+      }
+      res.set('Content-Type', 'image/jpeg');
+      res.set('Cache-Control', 'public, max-age=31536000');
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      res.send(buffer);
+    } catch (error) {
+      console.error('Image proxy error:', error);
+      res.status(500).send('Error fetching image');
+    }
+  });
+
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

@@ -6,6 +6,7 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { BookOpen, Scroll, Wand2, Flame, Shield, LogOut, Info, Feather } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DownloadAppDialog } from '../components/DownloadAppDialog';
 
 export default function MainLayout() {
   const { dbUser } = useAuthStore();
@@ -65,13 +66,17 @@ export default function MainLayout() {
                  <Shield className="w-4 h-4"/> Conselho
                </Link>
             )}
+            <DownloadAppDialog />
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-zinc-400 hover:text-white hover:bg-white/5 ml-2">
                <LogOut className="w-4 h-4 mr-2" /> Desconectar
             </Button>
           </nav>
 
           {/* Mobile Logout (Header) */}
-          <div className="md:hidden flex items-center gap-3">
+          <div className="md:hidden flex items-center gap-2">
+             <div className="mr-2">
+               <DownloadAppDialog />
+             </div>
              {(dbUser?.role === 'admin' || dbUser?.role === 'moderator') && (
                <Link to="/admin" className="text-amber-500/70 hover:text-amber-400 transition-colors drop-shadow-[0_0_5px_rgba(251,191,36,0.3)]">
                  <Shield className="w-5 h-5"/>

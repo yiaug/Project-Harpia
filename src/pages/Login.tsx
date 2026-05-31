@@ -20,6 +20,9 @@ export default function Login() {
       await checkAndCreateUser(result.user);
     } catch (e: any) {
       console.error(e);
+      if (e.code === 'auth/cancelled-popup-request' || e.code === 'auth/popup-closed-by-user') {
+        return; // Usuário fechou o popup
+      }
       toast.error('Erro no login: ' + e.message);
     }
   };
