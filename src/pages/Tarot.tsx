@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, Calendar, BookOpen } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { translateTarotCard } from '@/src/lib/tarotTranslation';
 import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, limit } from 'firebase/firestore';
 import { db, auth } from '@/src/firebase';
@@ -12,7 +11,6 @@ import { toast } from 'sonner';
 export default function Tarot() {
   const [card, setCard] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [flipped, setFlipped] = useState(false);
   
   const [activeTab, setActiveTab] = useState('daily');
   const [history, setHistory] = useState<any[]>([]);
@@ -66,12 +64,10 @@ export default function Tarot() {
   const drawCard = async (type: 'daily' | 'free') => {
     if (type === 'daily' && dailyCard) {
         setCard(dailyCard.card);
-        setFlipped(true); // show directly
         return;
     }
 
     setLoading(true);
-    setFlipped(false);
     setCard(null);
     try {
        const res = await fetch('/api/tarot/random');
@@ -89,7 +85,6 @@ export default function Tarot() {
              const finalCard = { ...c, imgUrl, name_pt: translated.nome_pt, meaning_pt: translated.significado_pt };
              setCard(finalCard);
              setLoading(false);
-             setFlipped(true);
              saveToHistory(finalCard, type);
           };
 
@@ -103,12 +98,6 @@ export default function Tarot() {
     }
   }
 
-  const handleFlip = () => {
-     if (card && !loading) {
-       setFlipped(true);
-     }
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-8 flex flex-col items-center pb-12 relative z-10 w-full">
       <div className="text-center mb-4">
@@ -116,7 +105,7 @@ export default function Tarot() {
          <p className="text-zinc-400 mt-2 tracking-wide font-medium">Conecte-se com o universo através do fluxo de energias arcaicas.</p>
       </div>
 
-      <Tabs defaultValue="daily" className="w-full" onValueChange={(v) => { setActiveTab(v); setCard(null); setFlipped(false); }}>
+      <Tabs defaultValue="daily" className="w-full" onValueChange={(v) => { setActiveTab(v); setCard(null); }}>
          <TabsList className="grid w-full grid-cols-3 bg-[#1a0b2e]/60 backdrop-blur-md border border-fuchsia-900/30 p-1 rounded-xl shadow-lg shadow-indigo-900/10">
             <TabsTrigger value="daily" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg text-xs sm:text-sm whitespace-normal h-auto py-2"><Calendar className="w-4 h-4 mr-2 hidden sm:block" /> <span className="hidden sm:inline">Visão Diária</span><span className="sm:hidden">Diária</span></TabsTrigger>
             <TabsTrigger value="free" className="data-[state=active]:bg-fuchsia-900/40 data-[state=active]:text-amber-300 text-zinc-400 transition-colors rounded-lg text-xs sm:text-sm whitespace-normal h-auto py-2"><Sparkles className="w-4 h-4 mr-2 hidden sm:block" /> <span className="hidden sm:inline">Consulta Livre</span><span className="sm:hidden">Livre</span></TabsTrigger>
@@ -130,7 +119,7 @@ export default function Tarot() {
                       {dailyCard ? (
                          <div className="text-center space-y-6">
                             <h2 className="text-2xl text-amber-300 font-serif drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">O véu do seu dia já foi desvendado.</h2>
-                            <Button onClick={() => { setCard(dailyCard.card); setFlipped(true); }} className="bg-amber-600/80 hover:bg-amber-600 text-white border border-amber-400/30 shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all">Contemplar Visão</Button>
+                            <Button onClick={() => { setCard(dailyCard.card); }} className="bg-amber-600/80 hover:bg-amber-600 text-white border border-amber-400/30 shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all">Contemplar Visão</Button>
                          </div>
                       ) : (
                          <Button onClick={() => drawCard('daily')} disabled={loading} size="lg" className="bg-amber-600/90 hover:bg-amber-500 text-amber-50 text-lg h-16 px-8 rounded-full shadow-[0_0_40px_rgba(217,119,6,0.4)] hover:shadow-[0_0_60px_rgba(217,119,6,0.6)] transition-all border border-amber-400/50">
@@ -180,65 +169,41 @@ export default function Tarot() {
 
       {/* Card Display Area for Daily or Free */}
       {(activeTab === 'daily' || activeTab === 'free') && card && (
-         <div className="flex justify-center w-full min-h-[450px] mt-8">
+         <div className="flex justify-center w-full mt-8">
           <div className="flex flex-col lg:flex-row gap-10 items-center lg:items-start w-full max-w-4xl">
-              {/* 3D Card Container */}
-              <div className="w-[240px] md:w-[280px] shrink-0" onClick={handleFlip}>
-                <motion.div 
-                   className="w-[240px] md:w-[280px] aspect-[1/1.7] relative cursor-pointer drop-shadow-[0_20px_30px_rgba(251,191,36,0.15)] group"
-                   animate={{ scale: flipped ? 1.05 : 1 }}
-                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                   {!flipped ? (
-                      <div 
-                         className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/d/d4/RWS_Tarot_00_Fool.jpg')] bg-cover bg-center rounded-2xl border-4 border-[#4a1d6a] shadow-[inset_0_0_40px_rgba(0,0,0,0.8)] flex items-center justify-center before:absolute before:inset-0 before:bg-[#0c0514]/90 before:rounded-xl"
-                      >
-                         <div className="relative z-10 text-amber-500/70 flex flex-col items-center group-hover:text-amber-400 transition-colors">
-                           <Sparkles className="w-16 h-16 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]" />
-                           <span className="text-sm mt-4 font-serif tracking-widest uppercase">Revelar</span>
-                         </div>
-                      </div>
-                   ) : (
-                      <div 
-                         className="absolute inset-0 rounded-2xl border-4 border-amber-600/80 shadow-[0_0_30px_rgba(217,119,6,0.3)] overflow-hidden bg-slate-100"
-                      >
-                         <img src={card.imgUrl} alt={card.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                      </div>
-                   )}
-                </motion.div>
+              {/* Card Image */}
+              <div className="w-[280px] md:w-[320px] shrink-0">
+                 <div className="w-full aspect-[1/1.7] rounded-2xl border-4 border-amber-600/80 shadow-[0_0_40px_rgba(217,119,6,0.4)] overflow-hidden bg-slate-100">
+                    <img 
+                       src={card.imgUrl.replace('https://sacred-texts.com/tarot/pkt/img/', '/api/tarot/image/')} 
+                       alt={card.name} 
+                       referrerPolicy="no-referrer" 
+                       className="w-full h-full object-cover" 
+                    />
+                 </div>
               </div>
 
               <div className="flex-1 w-full relative">
-                <AnimatePresence>
-                   {flipped && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-                      >
-                         <Card className="bg-[#1a0b2e]/80 border-fuchsia-900/40 backdrop-blur-xl shadow-2xl shadow-indigo-900/30 overflow-hidden relative">
-                           <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                              <Sparkles className="w-48 h-48 text-fuchsia-500" />
-                           </div>
-                           <CardHeader className="relative border-b border-fuchsia-900/20 bg-[#0c0514]/40">
-                             <CardTitle className="text-3xl text-amber-400 font-serif drop-shadow-md">{card.name_pt}</CardTitle>
-                             <CardDescription className="text-fuchsia-300/80 capitalize tracking-wider font-medium mt-2">{card.type === 'major' ? 'Arcano Maior' : 'Arcano Menor'}</CardDescription>
-                           </CardHeader>
-                           <CardContent className="space-y-6 pt-6 relative">
-                              <div>
-                                 <h3 className="text-xs font-bold text-fuchsia-500 uppercase tracking-widest mb-3 flex items-center gap-2"><Sparkles className="w-3 h-3"/> Profecia</h3>
-                                 <p className="text-zinc-200 leading-loose text-lg font-serif italic">{card.meaning_pt}</p>
-                              </div>
-                              <div className="pt-6 border-t border-fuchsia-900/20">
-                                 <Button onClick={() => setCard(null)} variant="outline" className="w-full border-fuchsia-900/50 text-fuchsia-200 hover:bg-fuchsia-900/30 hover:text-white transition-all shadow-sm">
-                                    Ocultar Visão
-                                 </Button>
-                              </div>
-                           </CardContent>
-                         </Card>
-                      </motion.div>
-                   )}
-                </AnimatePresence>
+                 <Card className="bg-[#1a0b2e]/80 border-fuchsia-900/40 backdrop-blur-xl shadow-2xl shadow-indigo-900/30 overflow-hidden relative">
+                   <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                      <Sparkles className="w-48 h-48 text-fuchsia-500" />
+                   </div>
+                   <CardHeader className="relative border-b border-fuchsia-900/20 bg-[#0c0514]/40">
+                     <CardTitle className="text-3xl text-amber-400 font-serif drop-shadow-md">{card.name_pt}</CardTitle>
+                     <CardDescription className="text-fuchsia-300/80 capitalize tracking-wider font-medium mt-2">{card.type === 'major' ? 'Arcano Maior' : 'Arcano Menor'}</CardDescription>
+                   </CardHeader>
+                   <CardContent className="space-y-6 pt-6 relative">
+                      <div>
+                         <h3 className="text-xs font-bold text-fuchsia-500 uppercase tracking-widest mb-3 flex items-center gap-2"><Sparkles className="w-3 h-3"/> Profecia</h3>
+                         <p className="text-zinc-200 leading-loose text-lg font-serif italic">{card.meaning_pt}</p>
+                      </div>
+                      <div className="pt-6 border-t border-fuchsia-900/20">
+                         <Button onClick={() => setCard(null)} variant="outline" className="w-full border-fuchsia-900/50 text-fuchsia-200 hover:bg-fuchsia-900/30 hover:text-white transition-all shadow-sm">
+                            Ocultar Visão
+                         </Button>
+                      </div>
+                   </CardContent>
+                 </Card>
               </div>
             </div>
          </div>
