@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, RefreshCw, Calendar, BookOpen } from 'lucide-react';
+import { Sparkles, Calendar, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { translateTarotCard } from '@/src/lib/tarotTranslation';
 import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, limit } from 'firebase/firestore';
@@ -89,6 +89,7 @@ export default function Tarot() {
              const finalCard = { ...c, imgUrl, name_pt: translated.nome_pt, meaning_pt: translated.significado_pt };
              setCard(finalCard);
              setLoading(false);
+             setFlipped(true);
              saveToHistory(finalCard, type);
           };
 
@@ -133,7 +134,7 @@ export default function Tarot() {
                          </div>
                       ) : (
                          <Button onClick={() => drawCard('daily')} disabled={loading} size="lg" className="bg-amber-600/90 hover:bg-amber-500 text-amber-50 text-lg h-16 px-8 rounded-full shadow-[0_0_40px_rgba(217,119,6,0.4)] hover:shadow-[0_0_60px_rgba(217,119,6,0.6)] transition-all border border-amber-400/50">
-                           {loading ? <RefreshCw className="w-6 h-6 animate-spin mr-2" /> : <Calendar className="w-6 h-6 mr-2" />}
+                           {loading ? <Sparkles className="w-6 h-6 animate-pulse mr-2" /> : <Calendar className="w-6 h-6 mr-2" />}
                            {loading ? 'Consultando as Estrelas...' : 'Revelar Face Diária'}
                          </Button>
                       )}
@@ -145,7 +146,7 @@ export default function Tarot() {
                 {!card || activeTab !== 'free' ? (
                    <div className="py-12">
                        <Button onClick={() => drawCard('free')} disabled={loading} size="lg" className="bg-[#1a0b2e]/80 hover:bg-fuchsia-900/40 border border-fuchsia-500/50 text-amber-100 text-lg h-16 px-8 rounded-full transition-all shadow-[0_0_20px_rgba(192,38,211,0.2)]">
-                         {loading ? <RefreshCw className="w-6 h-6 animate-spin mr-2 text-fuchsia-400" /> : <Sparkles className="w-6 h-6 mr-2 text-fuchsia-400" />}
+                         {loading ? <Sparkles className="w-6 h-6 animate-pulse mr-2 text-fuchsia-400" /> : <Sparkles className="w-6 h-6 mr-2 text-fuchsia-400" />}
                          {loading ? 'Lendo as Linhas...' : 'Evocar Carta Espontânea'}
                        </Button>
                    </div>
