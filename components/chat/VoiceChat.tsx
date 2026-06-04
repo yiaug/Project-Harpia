@@ -16,14 +16,17 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
    const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({}); // Keep audio elements
 
    useEffect(() => {
-      // Connect to Socket.io server
+      // Connect to Socket.io server only once
       const targetUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
       socketRef.current = io(targetUrl);
 
       socketRef.current.on('user-connected', (userId: string) => {
-         setPeers(prev => [...prev.filter(id => id !== userId), userId]);
+         setPeers(prev => {
+            if (!prev.includes(userId)) return [...prev, userId];
+            return prev;
+         });
          // The new user joined, let's create a peer connection offering to them
-         if (connected && userStream.current) {
+         if (userStream.current) {
             const peer = createPeer(userId, socketRef.current.id, userStream.current);
             peersRef.current.push({
                peerID: userId,
@@ -35,7 +38,7 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
       // Handle receiving an offer from a newly joined peer
       socketRef.current.on('offer', (payload: any) => {
          // Create a peer to receive the stream
-         if (connected && userStream.current) {
+         if (userStream.current) {
              const peer = addPeer(payload.signal, payload.callerID, userStream.current);
              peersRef.current.push({
                 peerID: payload.callerID,
@@ -64,7 +67,7 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
          // Remove and destroy the peer
          const peerObj = peersRef.current.find(p => p.peerID === userId);
          if (peerObj) {
-            peerObj.peer.destroy();
+            try { peerObj.peer.destroy(); } catch(e) {}
          }
          peersRef.current = peersRef.current.filter(p => p.peerID !== userId);
          // Cleanup audio element
@@ -78,15 +81,25 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
       return () => {
          socketRef.current?.disconnect();
          stopStream();
-         peersRef.current.forEach(p => p.peer.destroy());
+         peersRef.current.forEach(p => {
+            try { p.peer.destroy(); } catch(e) {}
+         });
       }
-   }, [connected]);
+   }, []); // Removed 'connected' to prevent socket reconnect on state change
+
+    const iceServers = {
+       iceServers: [
+           { urls: 'stun:stun.l.google.com:19302' },
+           { urls: 'stun:global.stun.twilio.com:3478' }
+       ]
+    };
 
     function createPeer(userToSignal: string, callerID: string, stream: MediaStream) {
        const peer = new Peer({
            initiator: true,
            trickle: false,
            stream,
+           config: iceServers
        });
 
        peer.on("signal", signal => {
@@ -109,6 +122,7 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
            initiator: false,
            trickle: false,
            stream,
+           config: iceServers
        });
 
        peer.on("signal", signal => {
@@ -128,8 +142,16 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
            const audio = new Audio();
            audio.autoplay = true;
            audioRefs.current[userId] = audio;
+           // Append to document to guarantee playback in some restrictive browsers
+           audio.style.display = 'none';
+           document.body.appendChild(audio);
        }
        audioRefs.current[userId].srcObject = stream;
+       
+       // Force play to overcome autoplay restrictions
+       audioRefs.current[userId].play().catch(e => {
+           console.error('Audio play error for user', userId, e);
+       });
    }
 
    const stopStream = () => {
@@ -137,6 +159,18 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
            userStream.current.getTracks().forEach(track => track.stop());
            userStream.current = null;
        }
+       // Also remove all appended audio elements
+       Object.keys(audioRefs.current).forEach(userId => {
+           const audio = audioRefs.current[userId];
+           if (audio) {
+               audio.pause();
+               audio.srcObject = null;
+               if (audio.parentNode) {
+                   audio.parentNode.removeChild(audio);
+               }
+               delete audioRefs.current[userId];
+           }
+       });
    };
 
    const toggleConnection = async () => {
@@ -145,13 +179,10 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
          setConnected(false);
          setPeers([]);
          stopStream();
-         peersRef.current.forEach(p => p.peer.destroy());
-         peersRef.current = [];
-         Object.values(audioRefs.current).forEach((a: HTMLAudioElement) => {
-            a.pause();
-            a.srcObject = null;
+         peersRef.current.forEach(p => {
+             try { p.peer.destroy(); } catch(e) {}
          });
-         audioRefs.current = {};
+         peersRef.current = [];
       } else {
          try {
              const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });

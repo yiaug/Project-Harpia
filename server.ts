@@ -24,17 +24,31 @@ async function startServer() {
   io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
     
+    // State to keep track of active rooms per socket
+    const activeRooms = new Map();
+
     // Join a room (Voice or Text)
     socket.on('join-room', (roomId, userId) => {
       socket.join(roomId);
       if (userId) {
         socket.join(userId); // Join personal room for signaling
       }
+      activeRooms.set(socket.id, { roomId, userId });
       socket.to(roomId).emit('user-connected', userId);
-      
-      socket.on('disconnect', () => {
-        socket.to(roomId).emit('user-disconnected', userId);
-      });
+    });
+    
+    socket.on('leave-room', (roomId, userId) => {
+      socket.leave(roomId);
+      activeRooms.delete(socket.id);
+      socket.to(roomId).emit('user-disconnected', userId);
+    });
+    
+    socket.on('disconnect', () => {
+      const data = activeRooms.get(socket.id);
+      if (data) {
+        socket.to(data.roomId).emit('user-disconnected', data.userId);
+        activeRooms.delete(socket.id);
+      }
     });
 
     // WebRTC Signaling
