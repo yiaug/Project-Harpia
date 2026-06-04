@@ -52,6 +52,10 @@ async function startServer() {
     });
 
     // WebRTC Signaling
+    socket.on('rtc-signal', (payload) => {
+        io.to(payload.target).emit('rtc-signal', payload);
+    });
+
     socket.on('offer', (payload) => {
         io.to(payload.target).emit('offer', payload);
     });

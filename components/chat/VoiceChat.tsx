@@ -35,30 +35,57 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
          }
       });
 
-      // Handle receiving an offer from a newly joined peer
-      socketRef.current.on('offer', (payload: any) => {
-         // Create a peer to receive the stream
-         if (userStream.current) {
-             const peer = addPeer(payload.signal, payload.callerID, userStream.current);
+      // Handle WebRTC signaling signals
+      socketRef.current.on('rtc-signal', (payload: any) => {
+         if (!userStream.current || !payload.callerID) return;
+
+         const existingPeer = peersRef.current.find(p => p.peerID === payload.callerID);
+         if (existingPeer && !existingPeer.peer.destroyed) {
+             try {
+                existingPeer.peer.signal(payload.signal);
+             } catch (err) {
+                console.error("Signal error processing:", err);
+             }
+         } else {
+             // This must be an inbound offer, as we don't have a peer for them
+             const peer = new Peer({
+                 initiator: false,
+                 trickle: true,
+                 stream: userStream.current,
+                 config: iceServers
+             });
+
+             peer.on("signal", signal => {
+                 socketRef.current.emit("rtc-signal", { 
+                     signal, 
+                     target: payload.callerID, 
+                     callerID: auth.currentUser?.uid 
+                 });
+             });
+
+             peer.on("stream", stream => {
+                 attachStream(payload.callerID, stream);
+             });
+             
+             peer.on("error", err => {
+                 console.error("Peer error:", err);
+             });
+
+             try {
+                 peer.signal(payload.signal);
+             } catch(err) {
+                 console.error("Signal error on new peer:", err);
+             }
+
              peersRef.current.push({
                 peerID: payload.callerID,
                 peer,
              });
+
              setPeers(prev => {
                 if(!prev.includes(payload.callerID)) return [...prev, payload.callerID];
                 return prev;
              });
-         }
-      });
-
-      socketRef.current.on('answer', (payload: any) => {
-         const item = peersRef.current.find(p => p.peerID === payload.id);
-         if (item && !item.peer.destroyed) {
-            try {
-               item.peer.signal(payload.signal);
-            } catch (err) {
-               console.error("Signal error on answer:", err);
-            }
          }
       });
 
@@ -97,13 +124,13 @@ export function VoiceChat({ room, onBack }: { room: any, onBack: () => void }) {
     function createPeer(userToSignal: string, callerID: string, stream: MediaStream) {
        const peer = new Peer({
            initiator: true,
-           trickle: false,
+           trickle: true,
            stream,
            config: iceServers
        });
 
        peer.on("signal", signal => {
-           socketRef.current.emit("offer", {
+           socketRef.current.emit("rtc-signal", {
                target: userToSignal,
                callerID: auth.currentUser?.uid || callerID,
                signal
